@@ -1,0 +1,83 @@
+# Build results
+bin/
+obj/
+out/
+[Ll]og/
+*.log
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# StyleCop
+StyleCopReport.xml
+
+# Files built by Visual Studio
+*.dbmdl
+*.bak
+*.orig
+
+# EF Core Migrations snapshot files (optional)
+*Migrations/*.Designer.cs
+*Migrations/*.csproj
+
+# dotenv files (optional, remove this if you want to commit .env)
+.env
+
+# Docker
+**/*.pid
+**/docker-compose.override.yml
+**/.docker/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+*.testlog
+
+# Nuke Build
+.nuke/
+
+# SonarQube
+.sonar/
+
+# Logs
+*.log
+logs/
+
+# Local secrets (optional, comment out if committing secrets.json)
+secrets.json
+
+# JetBrains Rider and Resharper files
+.ReSharper*/
+resharper.xml
+*_ReSharper*/
+*.DotSettings.user
+
+# Global tools restore
+.tools/
+
+# Temporary ASP.NET files
+**/wwwroot/static/

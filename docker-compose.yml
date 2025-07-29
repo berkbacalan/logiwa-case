@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: EcomMMS.API/Dockerfile
+    ports:
+      - "5000:80"
+      - "5001:443"
+    depends_on:
+      - postgres
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=ecommms;Username=postgres;Password=postgres
+    networks:
+      - ecommms-network
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ecommms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ecommms-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ecommms-network:
+    driver: bridge 

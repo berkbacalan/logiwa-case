@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomMMS.API", "EcomMMS.API\EcomMMS.API.csproj", "{DE6E1405-148F-4B98-A202-44CCD91D4C07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomMMS.Application", "EcomMMS.Application\EcomMMS.Application.csproj", "{597FE709-AF07-4CBE-AA22-9180D7ECB8AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomMMS.Domain", "EcomMMS.Domain\EcomMMS.Domain.csproj", "{7EA86010-FF60-40C7-90BA-80BD099B1986}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomMMS.Infrastructure", "EcomMMS.Infrastructure\EcomMMS.Infrastructure.csproj", "{93C7BBF5-378D-4F28-B596-3E7152152246}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomMMS.Persistence", "EcomMMS.Persistence\EcomMMS.Persistence.csproj", "{B31E0487-2995-4550-BA39-95B82E27587E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomMMS.Tests", "EcomMMS.Tests\EcomMMS.Tests.csproj", "{421FF904-D0F3-4777-921D-06EDCBCFEE26}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DE6E1405-148F-4B98-A202-44CCD91D4C07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE6E1405-148F-4B98-A202-44CCD91D4C07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE6E1405-148F-4B98-A202-44CCD91D4C07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE6E1405-148F-4B98-A202-44CCD91D4C07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{597FE709-AF07-4CBE-AA22-9180D7ECB8AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{597FE709-AF07-4CBE-AA22-9180D7ECB8AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{597FE709-AF07-4CBE-AA22-9180D7ECB8AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{597FE709-AF07-4CBE-AA22-9180D7ECB8AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EA86010-FF60-40C7-90BA-80BD099B1986}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EA86010-FF60-40C7-90BA-80BD099B1986}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EA86010-FF60-40C7-90BA-80BD099B1986}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EA86010-FF60-40C7-90BA-80BD099B1986}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93C7BBF5-378D-4F28-B596-3E7152152246}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93C7BBF5-378D-4F28-B596-3E7152152246}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93C7BBF5-378D-4F28-B596-3E7152152246}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93C7BBF5-378D-4F28-B596-3E7152152246}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B31E0487-2995-4550-BA39-95B82E27587E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B31E0487-2995-4550-BA39-95B82E27587E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B31E0487-2995-4550-BA39-95B82E27587E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B31E0487-2995-4550-BA39-95B82E27587E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{421FF904-D0F3-4777-921D-06EDCBCFEE26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{421FF904-D0F3-4777-921D-06EDCBCFEE26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{421FF904-D0F3-4777-921D-06EDCBCFEE26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{421FF904-D0F3-4777-921D-06EDCBCFEE26}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
