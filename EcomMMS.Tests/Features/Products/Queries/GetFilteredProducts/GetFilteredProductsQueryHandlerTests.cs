@@ -41,7 +41,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             }
 
             var categories = new List<Category> { category };
-            var query = new GetFilteredProductsQuery();
+            var query = new GetFilteredProductsQuery { Page = 1, PageSize = 10 };
 
             _mockProductRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(products);
@@ -400,7 +400,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             // Given
             var products = new List<Product>();
             var categories = TestDataHelper.CreateTestCategories(1);
-            var query = new GetFilteredProductsQuery();
+            var query = new GetFilteredProductsQuery { Page = 1, PageSize = 10 };
 
             _mockProductRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(products);
@@ -423,7 +423,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             // Given
             var products = TestDataHelper.CreateTestProducts(2);
             var categories = new List<Category>();
-            var query = new GetFilteredProductsQuery();
+            var query = new GetFilteredProductsQuery { Page = 1, PageSize = 10 };
 
             _mockProductRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(products);
@@ -463,7 +463,9 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             var categories = new List<Category> { category };
             var query = new GetFilteredProductsQuery
             {
-                SearchTerm = searchTerm
+                SearchTerm = searchTerm,
+                Page = 1,
+                PageSize = 10
             };
 
             _mockProductRepository.Setup(x => x.GetAllAsync())
@@ -479,6 +481,149 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
             result.Data.Should().HaveCount(2);
+        }
+
+        [Fact]
+        public async Task Handle_PaginationFirstPage_ShouldReturnCorrectNumberOfItems()
+        {
+            // Given
+            var category = TestDataHelper.CreateTestCategory();
+            var products = TestDataHelper.CreateTestProducts(15);
+
+            var categories = new List<Category> { category };
+            var query = new GetFilteredProductsQuery { Page = 1, PageSize = 5 };
+
+            _mockProductRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(products);
+            _mockCategoryRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(categories);
+
+            // When
+            var result = await _handler.Handle(query, CancellationToken.None);
+
+            // Then
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Should().HaveCount(5);
+        }
+
+        [Fact]
+        public async Task Handle_PaginationSecondPage_ShouldReturnCorrectItems()
+        {
+            // Given
+            var category = TestDataHelper.CreateTestCategory();
+            var products = TestDataHelper.CreateTestProducts(15);
+
+            var categories = new List<Category> { category };
+            var query = new GetFilteredProductsQuery { Page = 2, PageSize = 5 };
+
+            _mockProductRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(products);
+            _mockCategoryRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(categories);
+
+            // When
+            var result = await _handler.Handle(query, CancellationToken.None);
+
+            // Then
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Should().HaveCount(5);
+            
+            // Verify it's the second page (items 6-10)
+            var expectedProducts = products.Skip(5).Take(5).ToList();
+            for (int i = 0; i < result.Data.Count(); i++)
+            {
+                result.Data.ElementAt(i).Id.Should().Be(expectedProducts[i].Id);
+            }
+        }
+
+        [Fact]
+        public async Task Handle_PaginationLastPage_ShouldReturnRemainingItems()
+        {
+            // Given
+            var category = TestDataHelper.CreateTestCategory();
+            var products = TestDataHelper.CreateTestProducts(12);
+
+            var categories = new List<Category> { category };
+            var query = new GetFilteredProductsQuery { Page = 3, PageSize = 5 };
+
+            _mockProductRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(products);
+            _mockCategoryRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(categories);
+
+            // When
+            var result = await _handler.Handle(query, CancellationToken.None);
+
+            // Then
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Should().HaveCount(2);
+        }
+
+        [Fact]
+        public async Task Handle_PaginationPageBeyondData_ShouldReturnEmptyList()
+        {
+            // Given
+            var category = TestDataHelper.CreateTestCategory();
+            var products = TestDataHelper.CreateTestProducts(5);
+
+            var categories = new List<Category> { category };
+            var query = new GetFilteredProductsQuery { Page = 3, PageSize = 5 };
+
+            _mockProductRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(products);
+            _mockCategoryRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(categories);
+
+            // When
+            var result = await _handler.Handle(query, CancellationToken.None);
+
+            // Then
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task Handle_PaginationWithFilters_ShouldReturnFilteredAndPaginatedResults()
+        {
+            // Given
+            var category = TestDataHelper.CreateTestCategory();
+            var products = TestDataHelper.CreateTestProducts(20);
+
+            var categories = new List<Category> { category };
+            var query = new GetFilteredProductsQuery 
+            { 
+                SearchTerm = "Test",
+                MinStockQuantity = 10,
+                Page = 2,
+                PageSize = 3
+            };
+
+            _mockProductRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(products);
+            _mockCategoryRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(categories);
+
+            // When
+            var result = await _handler.Handle(query, CancellationToken.None);
+
+            // Then
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Should().HaveCount(3);
+
+            foreach (var product in result.Data)
+            {
+                product.Title.Should().Contain("Test");
+            }
         }
     }
 } 

@@ -73,7 +73,13 @@ namespace EcomMMS.Application.Features.Products.Queries.GetFilteredProducts
                 });
             }
 
-            return Result<IEnumerable<ProductDto>>.Success(productDtos);
+            var skip = (request.Page - 1) * request.PageSize;
+            var paginatedProducts = productDtos
+                .Skip(skip)
+                .Take(request.PageSize)
+                .ToList();
+
+            return Result<IEnumerable<ProductDto>>.Success(paginatedProducts);
         }
     }
 } 

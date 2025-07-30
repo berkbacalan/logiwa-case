@@ -11,5 +11,7 @@ namespace EcomMMS.Application.Features.Products.Queries.GetFilteredProducts
         public int? MaxStockQuantity { get; set; }
         public bool? IsLive { get; set; }
         public Guid? CategoryId { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
     }
 } 
