@@ -6,5 +6,6 @@ namespace EcomMMS.Domain.Interfaces
     {
         Task<Category?> GetByNameAsync(string name);
         Task<IEnumerable<Category>> GetByMinimumStockQuantityAsync(int minStockQuantity);
+        Task SaveChangesAsync();
     }
 } 

@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EcomMMS.Domain\EcomMMS.Domain.csproj" />
+    <ProjectReference Include="..\EcomMMS.Persistence\EcomMMS.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>
