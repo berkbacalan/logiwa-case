@@ -22,6 +22,12 @@ builder.Services.AddPersistence(builder.Configuration);
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    SeedData.SeedCategories(context);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
