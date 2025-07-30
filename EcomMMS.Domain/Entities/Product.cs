@@ -10,12 +10,11 @@ namespace EcomMMS.Domain.Entities
         public int StockQuantity { get; private set; }
         public bool IsLive { get; private set; }
 
-        // Navigation property
         public Category? Category { get; private set; }
 
-        private Product() { } // For EF Core
+        private Product() { }
 
-        public Product(string title, string? description, Guid categoryId, int stockQuantity)
+        public Product(string title, string? description, Guid categoryId, int stockQuantity) : base()
         {
             ValidateTitle(title);
             ValidateStockQuantity(stockQuantity);
@@ -25,7 +24,6 @@ namespace EcomMMS.Domain.Entities
             Description = description;
             CategoryId = categoryId;
             StockQuantity = stockQuantity;
-            CreatedAt = DateTime.UtcNow;
             
             UpdateIsLiveStatus();
         }

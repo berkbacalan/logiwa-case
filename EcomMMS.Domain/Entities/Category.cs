@@ -9,14 +9,13 @@ namespace EcomMMS.Domain.Entities
 
         private Category() { }
 
-        public Category(string name, int minimumStockQuantity)
+        public Category(string name, int minimumStockQuantity) : base()
         {
             ValidateName(name);
             ValidateMinimumStockQuantity(minimumStockQuantity);
 
             Name = name;
             MinimumStockQuantity = minimumStockQuantity;
-            CreatedAt = DateTime.UtcNow;
         }
 
         public void UpdateName(string name)
