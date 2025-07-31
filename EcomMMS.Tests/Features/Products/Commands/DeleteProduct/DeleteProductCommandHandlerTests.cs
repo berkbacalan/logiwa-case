@@ -15,13 +15,15 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
     {
         private readonly Mock<IProductRepository> _mockProductRepository;
         private readonly Mock<IValidator<DeleteProductCommand>> _mockValidator;
+        private readonly Mock<ICacheService> _mockCacheService;
         private readonly DeleteProductCommandHandler _handler;
 
         public DeleteProductCommandHandlerTests()
         {
             _mockProductRepository = new Mock<IProductRepository>();
             _mockValidator = new Mock<IValidator<DeleteProductCommand>>();
-            _handler = new DeleteProductCommandHandler(_mockProductRepository.Object, _mockValidator.Object);
+            _mockCacheService = new Mock<ICacheService>();
+            _handler = new DeleteProductCommandHandler(_mockProductRepository.Object, _mockValidator.Object, _mockCacheService.Object);
         }
 
         [Fact]
@@ -44,6 +46,8 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
                 .ReturnsAsync(product);
             _mockProductRepository.Setup(x => x.DeleteAsync(product.Id))
                 .Returns(Task.CompletedTask);
+            _mockCacheService.Setup(x => x.RemoveByPatternAsync("products:*"))
+                .Returns(Task.CompletedTask);
 
             // When
             var result = await _handler.Handle(command, CancellationToken.None);
@@ -56,6 +60,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
             _mockValidator.Verify(x => x.ValidateAsync(command, It.IsAny<CancellationToken>()), Times.Once);
             _mockProductRepository.Verify(x => x.GetByIdAsync(product.Id), Times.Once);
             _mockProductRepository.Verify(x => x.DeleteAsync(product.Id), Times.Once);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync("products:*"), Times.Once);
         }
 
         [Fact]
@@ -88,6 +93,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
 
             _mockProductRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
             _mockProductRepository.Verify(x => x.DeleteAsync(It.IsAny<Guid>()), Times.Never);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -115,6 +121,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
             result.ErrorMessage.Should().Contain("not found");
 
             _mockProductRepository.Verify(x => x.DeleteAsync(It.IsAny<Guid>()), Times.Never);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Theory]
@@ -141,6 +148,8 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
                 .ReturnsAsync(product);
             _mockProductRepository.Setup(x => x.DeleteAsync(productId))
                 .Returns(Task.CompletedTask);
+            _mockCacheService.Setup(x => x.RemoveByPatternAsync("products:*"))
+                .Returns(Task.CompletedTask);
 
             // When
             var result = await _handler.Handle(command, CancellationToken.None);
@@ -152,6 +161,43 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
 
             _mockProductRepository.Verify(x => x.GetByIdAsync(productId), Times.Once);
             _mockProductRepository.Verify(x => x.DeleteAsync(productId), Times.Once);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync("products:*"), Times.Once);
+        }
+
+        [Fact]
+        public async Task Handle_CacheServiceThrowsException_ShouldStillDeleteProduct()
+        {
+            // Given
+            var category = TestDataHelper.CreateTestCategory();
+            var product = new Product("Test Product", "Test Description", category.Id, 15);
+            product.SetCategory(category);
+
+            var command = new DeleteProductCommand
+            {
+                Id = product.Id
+            };
+
+            var validationResult = new FluentValidation.Results.ValidationResult();
+            _mockValidator.Setup(x => x.ValidateAsync(command, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(validationResult);
+            _mockProductRepository.Setup(x => x.GetByIdAsync(product.Id))
+                .ReturnsAsync(product);
+            _mockProductRepository.Setup(x => x.DeleteAsync(product.Id))
+                .Returns(Task.CompletedTask);
+            _mockCacheService.Setup(x => x.RemoveByPatternAsync("products:*"))
+                .ThrowsAsync(new Exception("Cache service error"));
+
+            // When
+            var result = await _handler.Handle(command, CancellationToken.None);
+
+            // Then
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().BeTrue();
+
+            _mockProductRepository.Verify(x => x.GetByIdAsync(product.Id), Times.Once);
+            _mockProductRepository.Verify(x => x.DeleteAsync(product.Id), Times.Once);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync("products:*"), Times.Once);
         }
     }
 } 

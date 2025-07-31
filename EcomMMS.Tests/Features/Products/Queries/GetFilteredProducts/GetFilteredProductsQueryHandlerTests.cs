@@ -5,6 +5,7 @@ using EcomMMS.Domain.Entities;
 using EcomMMS.Domain.Interfaces;
 using EcomMMS.Application.Features.Products.Queries.GetFilteredProducts;
 using EcomMMS.Application.Common;
+using EcomMMS.Application.DTOs;
 using EcomMMS.Tests.TestData;
 using Xunit;
 
@@ -14,13 +15,34 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
     {
         private readonly Mock<IProductRepository> _mockProductRepository;
         private readonly Mock<ICategoryRepository> _mockCategoryRepository;
+        private readonly Mock<ICacheService> _mockCacheService;
+        private readonly Mock<ICacheKeyGenerator> _mockCacheKeyGenerator;
         private readonly GetFilteredProductsQueryHandler _handler;
 
         public GetFilteredProductsQueryHandlerTests()
         {
             _mockProductRepository = new Mock<IProductRepository>();
             _mockCategoryRepository = new Mock<ICategoryRepository>();
-            _handler = new GetFilteredProductsQueryHandler(_mockProductRepository.Object, _mockCategoryRepository.Object);
+            _mockCacheService = new Mock<ICacheService>();
+            _mockCacheKeyGenerator = new Mock<ICacheKeyGenerator>();
+            _handler = new GetFilteredProductsQueryHandler(_mockProductRepository.Object, _mockCategoryRepository.Object, _mockCacheService.Object, _mockCacheKeyGenerator.Object);
+        }
+
+        private void SetupCacheMocks()
+        {
+            _mockCacheService.Setup(x => x.GetAsync<IEnumerable<ProductDto>>(It.IsAny<string>()))
+                .ReturnsAsync((IEnumerable<ProductDto>?)null);
+            _mockCacheKeyGenerator.Setup(x => x.GenerateProductFilterKey(It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<int>(), It.IsAny<int>()))
+                .Returns("test-cache-key");
+            _mockCacheService.Setup(x => x.SetAsync(It.IsAny<string>(), It.IsAny<IEnumerable<ProductDto>>(), It.IsAny<TimeSpan>()))
+                .Returns(Task.CompletedTask);
+        }
+
+        private void VerifyCacheMocks()
+        {
+            _mockCacheService.Verify(x => x.GetAsync<IEnumerable<ProductDto>>(It.IsAny<string>()), Times.Once);
+            _mockCacheKeyGenerator.Verify(x => x.GenerateProductFilterKey(It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<int>(), It.IsAny<int>()), Times.Once);
+            _mockCacheService.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<IEnumerable<ProductDto>>(), It.IsAny<TimeSpan>()), Times.Once);
         }
 
         [Fact]
@@ -47,6 +69,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -59,6 +82,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            VerifyCacheMocks();
         }
 
         [Fact]
@@ -88,6 +112,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -101,6 +126,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            VerifyCacheMocks();
         }
 
         [Fact]
@@ -130,6 +156,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -143,6 +170,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            VerifyCacheMocks();
         }
 
         [Fact]
@@ -172,6 +200,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -185,6 +214,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            VerifyCacheMocks();
         }
 
         [Fact]
@@ -214,6 +244,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -227,6 +258,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            VerifyCacheMocks();
         }
 
         [Fact]
@@ -258,6 +290,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -271,6 +304,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            VerifyCacheMocks();
         }
 
         [Fact]
@@ -300,6 +334,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -340,6 +375,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -380,6 +416,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -429,6 +466,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -472,6 +510,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -497,6 +536,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -522,6 +562,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -532,7 +573,6 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Data.Should().NotBeNull();
             result.Data.Should().HaveCount(5);
             
-            // Verify it's the second page (items 6-10)
             var expectedProducts = products.Skip(5).Take(5).ToList();
             for (int i = 0; i < result.Data.Count(); i++)
             {
@@ -554,6 +594,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -579,6 +620,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -610,6 +652,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
                 .ReturnsAsync(products);
             _mockCategoryRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(categories);
+            SetupCacheMocks();
 
             // When
             var result = await _handler.Handle(query, CancellationToken.None);

@@ -16,6 +16,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
         private readonly Mock<IProductRepository> _mockProductRepository;
         private readonly Mock<ICategoryRepository> _mockCategoryRepository;
         private readonly Mock<IValidator<CreateProductCommand>> _mockValidator;
+        private readonly Mock<ICacheService> _mockCacheService;
         private readonly CreateProductCommandHandler _handler;
 
         public CreateProductCommandHandlerTests()
@@ -23,7 +24,8 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
             _mockProductRepository = new Mock<IProductRepository>();
             _mockCategoryRepository = new Mock<ICategoryRepository>();
             _mockValidator = new Mock<IValidator<CreateProductCommand>>();
-            _handler = new CreateProductCommandHandler(_mockProductRepository.Object, _mockCategoryRepository.Object, _mockValidator.Object);
+            _mockCacheService = new Mock<ICacheService>();
+            _handler = new CreateProductCommandHandler(_mockProductRepository.Object, _mockCategoryRepository.Object, _mockValidator.Object, _mockCacheService.Object);
         }
 
         [Fact]
@@ -49,6 +51,8 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
                 .ReturnsAsync(category);
             _mockProductRepository.Setup(x => x.AddAsync(It.IsAny<Product>()))
                 .ReturnsAsync(product);
+            _mockCacheService.Setup(x => x.RemoveByPatternAsync("products:*"))
+                .Returns(Task.CompletedTask);
 
             // When
             var result = await _handler.Handle(command, CancellationToken.None);
@@ -66,6 +70,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
             _mockValidator.Verify(x => x.ValidateAsync(command, It.IsAny<CancellationToken>()), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetByIdAsync(category.Id), Times.Once);
             _mockProductRepository.Verify(x => x.AddAsync(It.IsAny<Product>()), Times.Once);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync("products:*"), Times.Once);
         }
 
         [Fact]
@@ -103,6 +108,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
 
             _mockCategoryRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
             _mockProductRepository.Verify(x => x.AddAsync(It.IsAny<Product>()), Times.Never);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -132,6 +138,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
             result.ErrorMessage.Should().Contain("not found");
 
             _mockProductRepository.Verify(x => x.AddAsync(It.IsAny<Product>()), Times.Never);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Theory]
@@ -169,6 +176,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
 
             _mockCategoryRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
             _mockProductRepository.Verify(x => x.AddAsync(It.IsAny<Product>()), Times.Never);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Theory]
@@ -206,6 +214,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
 
             _mockCategoryRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
             _mockProductRepository.Verify(x => x.AddAsync(It.IsAny<Product>()), Times.Never);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -240,6 +249,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
 
             _mockCategoryRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
             _mockProductRepository.Verify(x => x.AddAsync(It.IsAny<Product>()), Times.Never);
+            _mockCacheService.Verify(x => x.RemoveByPatternAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Theory]
@@ -267,6 +277,8 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
                 .ReturnsAsync(category);
             _mockProductRepository.Setup(x => x.AddAsync(It.IsAny<Product>()))
                 .ReturnsAsync(product);
+            _mockCacheService.Setup(x => x.RemoveByPatternAsync("products:*"))
+                .Returns(Task.CompletedTask);
 
             // When
             var result = await _handler.Handle(command, CancellationToken.None);
