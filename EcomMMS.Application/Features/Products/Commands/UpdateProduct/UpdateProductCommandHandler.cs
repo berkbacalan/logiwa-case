@@ -12,17 +12,20 @@ namespace EcomMMS.Application.Features.Products.Commands.UpdateProduct
         private readonly ICategoryRepository _categoryRepository;
         private readonly IValidator<UpdateProductCommand> _validator;
         private readonly ICacheService _cacheService;
+        private readonly IApplicationLogger _logger;
 
         public UpdateProductCommandHandler(
             IProductRepository productRepository,
             ICategoryRepository categoryRepository,
             IValidator<UpdateProductCommand> validator,
-            ICacheService cacheService)
+            ICacheService cacheService,
+            IApplicationLogger logger)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _validator = validator;
             _cacheService = cacheService;
+            _logger = logger;
         }
 
         public async Task<Result<ProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
@@ -31,12 +34,14 @@ namespace EcomMMS.Application.Features.Products.Commands.UpdateProduct
             if (!validationResult.IsValid)
             {
                 var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                _logger.LogValidationError("UpdateProduct", string.Join(", ", errors));
                 return Result<ProductDto>.Failure("Validation failed", errors);
             }
 
             var existingProduct = await _productRepository.GetByIdAsync(request.Id);
             if (existingProduct == null)
             {
+                _logger.LogBusinessLogicError("UpdateProduct", $"Product with ID {request.Id} not found");
                 return Result<ProductDto>.Failure($"Product with ID {request.Id} not found.");
             }
 
@@ -55,6 +60,7 @@ namespace EcomMMS.Application.Features.Products.Commands.UpdateProduct
                 var newCategory = await _categoryRepository.GetByIdAsync(request.CategoryId.Value);
                 if (newCategory == null)
                 {
+                    _logger.LogBusinessLogicError("UpdateProduct", $"Category with ID {request.CategoryId.Value} not found");
                     return Result<ProductDto>.Failure($"Category with ID {request.CategoryId.Value} not found.");
                 }
                 existingProduct.UpdateCategory(request.CategoryId.Value);
@@ -82,6 +88,7 @@ namespace EcomMMS.Application.Features.Products.Commands.UpdateProduct
             };
 
             await InvalidateProductCache();
+            _logger.LogInformation("Product updated successfully: {ProductId} - {ProductTitle}", existingProduct.Id, existingProduct.Title);
 
             return Result<ProductDto>.Success(productDto);
         }
@@ -91,9 +98,11 @@ namespace EcomMMS.Application.Features.Products.Commands.UpdateProduct
             try
             {
                 await _cacheService.RemoveByPatternAsync("products:*");
+                _logger.LogInformation("Product cache invalidated successfully");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogCacheError(ex, "RemoveByPattern", "products:*");
             }
         }
     }

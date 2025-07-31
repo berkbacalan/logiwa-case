@@ -17,6 +17,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
         private readonly Mock<ICategoryRepository> _mockCategoryRepository;
         private readonly Mock<IValidator<CreateProductCommand>> _mockValidator;
         private readonly Mock<ICacheService> _mockCacheService;
+        private readonly Mock<IApplicationLogger> _mockLogger;
         private readonly CreateProductCommandHandler _handler;
 
         public CreateProductCommandHandlerTests()
@@ -25,7 +26,8 @@ namespace EcomMMS.Tests.Features.Products.Commands.CreateProduct
             _mockCategoryRepository = new Mock<ICategoryRepository>();
             _mockValidator = new Mock<IValidator<CreateProductCommand>>();
             _mockCacheService = new Mock<ICacheService>();
-            _handler = new CreateProductCommandHandler(_mockProductRepository.Object, _mockCategoryRepository.Object, _mockValidator.Object, _mockCacheService.Object);
+            _mockLogger = new Mock<IApplicationLogger>();
+            _handler = new CreateProductCommandHandler(_mockProductRepository.Object, _mockCategoryRepository.Object, _mockValidator.Object, _mockCacheService.Object, _mockLogger.Object);
         }
 
         [Fact]

@@ -17,6 +17,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
         private readonly Mock<ICategoryRepository> _mockCategoryRepository;
         private readonly Mock<ICacheService> _mockCacheService;
         private readonly Mock<ICacheKeyGenerator> _mockCacheKeyGenerator;
+        private readonly Mock<IApplicationLogger> _mockLogger;
         private readonly GetFilteredProductsQueryHandler _handler;
 
         public GetFilteredProductsQueryHandlerTests()
@@ -25,7 +26,8 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             _mockCategoryRepository = new Mock<ICategoryRepository>();
             _mockCacheService = new Mock<ICacheService>();
             _mockCacheKeyGenerator = new Mock<ICacheKeyGenerator>();
-            _handler = new GetFilteredProductsQueryHandler(_mockProductRepository.Object, _mockCategoryRepository.Object, _mockCacheService.Object, _mockCacheKeyGenerator.Object);
+            _mockLogger = new Mock<IApplicationLogger>();
+            _handler = new GetFilteredProductsQueryHandler(_mockProductRepository.Object, _mockCategoryRepository.Object, _mockCacheService.Object, _mockCacheKeyGenerator.Object, _mockLogger.Object);
         }
 
         private void SetupCacheMocks()

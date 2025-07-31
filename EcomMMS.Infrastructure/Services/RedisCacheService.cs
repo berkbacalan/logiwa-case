@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using EcomMMS.Application.Common;
 using System.Text.Json;
+using StackExchange.Redis;
 
 namespace EcomMMS.Infrastructure.Services
 {
@@ -10,11 +11,13 @@ namespace EcomMMS.Infrastructure.Services
         private readonly IDistributedCache _distributedCache;
         private readonly ILogger<RedisCacheService> _logger;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly IConnectionMultiplexer _redisConnection;
 
-        public RedisCacheService(IDistributedCache distributedCache, ILogger<RedisCacheService> logger)
+        public RedisCacheService(IDistributedCache distributedCache, ILogger<RedisCacheService> logger, IConnectionMultiplexer redisConnection)
         {
             _distributedCache = distributedCache;
             _logger = logger;
+            _redisConnection = redisConnection;
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -83,7 +86,19 @@ namespace EcomMMS.Infrastructure.Services
         {
             try
             {
-                _logger.LogWarning("Pattern-based cache removal is not fully implemented for pattern: {Pattern}", pattern);
+                var database = _redisConnection.GetDatabase();
+                var server = _redisConnection.GetServer(_redisConnection.GetEndPoints().First());
+                
+                var keys = server.Keys(pattern: pattern);
+                var removedCount = 0;
+                
+                foreach (var key in keys)
+                {
+                    await database.KeyDeleteAsync(key);
+                    removedCount++;
+                }
+                
+                _logger.LogInformation("Removed {Count} cache entries for pattern: {Pattern}", removedCount, pattern);
             }
             catch (Exception ex)
             {

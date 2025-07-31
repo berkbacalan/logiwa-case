@@ -16,6 +16,7 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
         private readonly Mock<IProductRepository> _mockProductRepository;
         private readonly Mock<IValidator<DeleteProductCommand>> _mockValidator;
         private readonly Mock<ICacheService> _mockCacheService;
+        private readonly Mock<IApplicationLogger> _mockLogger;
         private readonly DeleteProductCommandHandler _handler;
 
         public DeleteProductCommandHandlerTests()
@@ -23,7 +24,8 @@ namespace EcomMMS.Tests.Features.Products.Commands.DeleteProduct
             _mockProductRepository = new Mock<IProductRepository>();
             _mockValidator = new Mock<IValidator<DeleteProductCommand>>();
             _mockCacheService = new Mock<ICacheService>();
-            _handler = new DeleteProductCommandHandler(_mockProductRepository.Object, _mockValidator.Object, _mockCacheService.Object);
+            _mockLogger = new Mock<IApplicationLogger>();
+            _handler = new DeleteProductCommandHandler(_mockProductRepository.Object, _mockValidator.Object, _mockCacheService.Object, _mockLogger.Object);
         }
 
         [Fact]

@@ -49,8 +49,17 @@ app.UseCachePerformanceMonitoring();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    SeedData.SeedCategories(context);
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        SeedData.SeedCategories(context, logger);
+    }
+    catch (Exception ex)
+    {
+        Log.Fatal(ex, "Failed to seed database");
+        throw;
+    }
 }
 
 if (app.Environment.IsDevelopment())

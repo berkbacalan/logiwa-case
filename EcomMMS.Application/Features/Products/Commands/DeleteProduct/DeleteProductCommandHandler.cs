@@ -10,15 +10,18 @@ namespace EcomMMS.Application.Features.Products.Commands.DeleteProduct
         private readonly IProductRepository _productRepository;
         private readonly IValidator<DeleteProductCommand> _validator;
         private readonly ICacheService _cacheService;
+        private readonly IApplicationLogger _logger;
 
         public DeleteProductCommandHandler(
             IProductRepository productRepository,
             IValidator<DeleteProductCommand> validator,
-            ICacheService cacheService)
+            ICacheService cacheService,
+            IApplicationLogger logger)
         {
             _productRepository = productRepository;
             _validator = validator;
             _cacheService = cacheService;
+            _logger = logger;
         }
 
         public async Task<Result<bool>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
@@ -27,16 +30,19 @@ namespace EcomMMS.Application.Features.Products.Commands.DeleteProduct
             if (!validationResult.IsValid)
             {
                 var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                _logger.LogValidationError("DeleteProduct", string.Join(", ", errors));
                 return Result<bool>.Failure("Validation failed", errors);
             }
 
             var existingProduct = await _productRepository.GetByIdAsync(request.Id);
             if (existingProduct == null)
             {
+                _logger.LogBusinessLogicError("DeleteProduct", $"Product with ID {request.Id} not found");
                 return Result<bool>.Failure($"Product with ID {request.Id} not found.");
             }
 
             await _productRepository.DeleteAsync(request.Id);
+            _logger.LogInformation("Product deleted successfully: {ProductId} - {ProductTitle}", existingProduct.Id, existingProduct.Title);
 
             await InvalidateProductCache();
 
@@ -48,9 +54,11 @@ namespace EcomMMS.Application.Features.Products.Commands.DeleteProduct
             try
             {
                 await _cacheService.RemoveByPatternAsync("products:*");
+                _logger.LogInformation("Product cache invalidated successfully");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogCacheError(ex, "RemoveByPattern", "products:*");
             }
         }
     }

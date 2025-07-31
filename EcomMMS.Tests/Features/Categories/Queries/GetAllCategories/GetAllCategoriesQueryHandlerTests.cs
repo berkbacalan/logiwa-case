@@ -1,10 +1,12 @@
+using FluentAssertions;
+using MediatR;
+using Moq;
 using EcomMMS.Application.Features.Categories.Queries.GetAllCategories;
-using EcomMMS.Application.Common;
-using EcomMMS.Application.DTOs;
 using EcomMMS.Domain.Entities;
 using EcomMMS.Domain.Interfaces;
+using EcomMMS.Application.Common;
+using EcomMMS.Application.DTOs;
 using EcomMMS.Tests.TestData;
-using Moq;
 using Xunit;
 
 namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
@@ -14,6 +16,7 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
         private readonly Mock<ICategoryRepository> _mockCategoryRepository;
         private readonly Mock<ICacheService> _mockCacheService;
         private readonly Mock<ICacheKeyGenerator> _mockCacheKeyGenerator;
+        private readonly Mock<IApplicationLogger> _mockLogger;
         private readonly GetAllCategoriesQueryHandler _handler;
 
         public GetAllCategoriesQueryHandlerTests()
@@ -21,7 +24,8 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             _mockCategoryRepository = new Mock<ICategoryRepository>();
             _mockCacheService = new Mock<ICacheService>();
             _mockCacheKeyGenerator = new Mock<ICacheKeyGenerator>();
-            _handler = new GetAllCategoriesQueryHandler(_mockCategoryRepository.Object, _mockCacheService.Object, _mockCacheKeyGenerator.Object);
+            _mockLogger = new Mock<IApplicationLogger>();
+            _handler = new GetAllCategoriesQueryHandler(_mockCategoryRepository.Object, _mockCacheService.Object, _mockCacheKeyGenerator.Object, _mockLogger.Object);
         }
 
         [Fact]

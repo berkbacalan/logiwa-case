@@ -7,6 +7,7 @@ using FluentAssertions;
 using Xunit;
 using System.Text.Json;
 using System.Text;
+using StackExchange.Redis;
 
 namespace EcomMMS.Tests.Features.Cache
 {
@@ -14,13 +15,15 @@ namespace EcomMMS.Tests.Features.Cache
     {
         private readonly Mock<IDistributedCache> _mockDistributedCache;
         private readonly Mock<ILogger<RedisCacheService>> _mockLogger;
+        private readonly Mock<IConnectionMultiplexer> _mockRedisConnection;
         private readonly RedisCacheService _cacheService;
 
         public CacheServiceTests()
         {
             _mockDistributedCache = new Mock<IDistributedCache>();
             _mockLogger = new Mock<ILogger<RedisCacheService>>();
-            _cacheService = new RedisCacheService(_mockDistributedCache.Object, _mockLogger.Object);
+            _mockRedisConnection = new Mock<IConnectionMultiplexer>();
+            _cacheService = new RedisCacheService(_mockDistributedCache.Object, _mockLogger.Object, _mockRedisConnection.Object);
         }
 
         [Fact]
