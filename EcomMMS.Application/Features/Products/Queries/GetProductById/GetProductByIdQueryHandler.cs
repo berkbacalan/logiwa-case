@@ -11,17 +11,20 @@ namespace EcomMMS.Application.Features.Products.Queries.GetProductById
         private readonly ICategoryRepository _categoryRepository;
         private readonly ICacheService _cacheService;
         private readonly ICacheKeyGenerator _cacheKeyGenerator;
+        private readonly IApplicationLogger _logger;
 
         public GetProductByIdQueryHandler(
             IProductRepository productRepository,
             ICategoryRepository categoryRepository,
             ICacheService cacheService,
-            ICacheKeyGenerator cacheKeyGenerator)
+            ICacheKeyGenerator cacheKeyGenerator,
+            IApplicationLogger logger)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _cacheService = cacheService;
             _cacheKeyGenerator = cacheKeyGenerator;
+            _logger = logger;
         }
 
         public async Task<Result<ProductDto>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
@@ -34,17 +37,21 @@ namespace EcomMMS.Application.Features.Products.Queries.GetProductById
                 try
                 {
                     cachedResult = await _cacheService.GetAsync<ProductDto>(cacheKey);
+                    if (cachedResult != null)
+                    {
+                        _logger.LogInformation("Product retrieved from cache - ProductId: {ProductId}", request.Id);
+                        return Result<ProductDto>.Success(cachedResult);
+                    }
                 }
-                catch (Exception){}
-
-                if (cachedResult != null)
+                catch (Exception ex)
                 {
-                    return Result<ProductDto>.Success(cachedResult);
+                    _logger.LogCacheError(ex, "Get", cacheKey);
                 }
 
                 var product = await _productRepository.GetByIdAsync(request.Id);
                 if (product == null)
                 {
+                    _logger.LogBusinessLogicError("GetProductById", $"Product with ID {request.Id} not found");
                     return Result<ProductDto>.Failure($"Product with ID {request.Id} not found.");
                 }
 
@@ -65,15 +72,20 @@ namespace EcomMMS.Application.Features.Products.Queries.GetProductById
                 try
                 {
                     await _cacheService.SetAsync(cacheKey, productDto, TimeSpan.FromHours(1));
+                    _logger.LogInformation("Product cached successfully - ProductId: {ProductId}", request.Id);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    _logger.LogCacheError(ex, "Set", cacheKey);
                 }
 
+                _logger.LogInformation("Product retrieved successfully - ProductId: {ProductId}, Title: {Title}", 
+                    request.Id, product.Title);
                 return Result<ProductDto>.Success(productDto);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to retrieve product - ProductId: {ProductId}", request.Id);
                 return Result<ProductDto>.Failure($"An error occurred while retrieving the product: {ex.Message}");
             }
         }

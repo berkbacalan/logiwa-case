@@ -13,17 +13,20 @@ namespace EcomMMS.Application.Features.Products.Commands.CreateProduct
         private readonly ICategoryRepository _categoryRepository;
         private readonly IValidator<CreateProductCommand> _validator;
         private readonly ICacheService _cacheService;
+        private readonly IApplicationLogger _logger;
 
         public CreateProductCommandHandler(
             IProductRepository productRepository,
             ICategoryRepository categoryRepository,
             IValidator<CreateProductCommand> validator,
-            ICacheService cacheService)
+            ICacheService cacheService,
+            IApplicationLogger logger)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _validator = validator;
             _cacheService = cacheService;
+            _logger = logger;
         }
 
         public async Task<Result<ProductDto>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
@@ -32,12 +35,15 @@ namespace EcomMMS.Application.Features.Products.Commands.CreateProduct
             if (!validationResult.IsValid)
             {
                 var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                var errorDetails = string.Join(", ", errors);
+                _logger.LogValidationError("CreateProduct", errorDetails);
                 return Result<ProductDto>.Failure("Validation failed", errors);
             }
 
             var category = await _categoryRepository.GetByIdAsync(request.CategoryId);
             if (category == null)
             {
+                _logger.LogBusinessLogicError("CreateProduct", $"Category with ID {request.CategoryId} not found");
                 return Result<ProductDto>.Failure($"Category with ID {request.CategoryId} not found.");
             }
 
@@ -66,6 +72,9 @@ namespace EcomMMS.Application.Features.Products.Commands.CreateProduct
 
             await InvalidateProductCache();
 
+            _logger.LogInformation("Product created successfully - ProductId: {ProductId}, Title: {Title}, Category: {Category}", 
+                createdProduct.Id, createdProduct.Title, category.Name);
+
             return Result<ProductDto>.Success(productDto);
         }
 
@@ -74,9 +83,11 @@ namespace EcomMMS.Application.Features.Products.Commands.CreateProduct
             try
             {
                 await _cacheService.RemoveByPatternAsync("products:*");
+                _logger.LogInformation("Product cache invalidated successfully");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogCacheError(ex, "RemoveByPattern", "products:*");
             }
         }
     }
