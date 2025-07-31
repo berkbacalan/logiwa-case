@@ -9,7 +9,8 @@ using EcomMMS.Application.Features.Products.Queries.GetFilteredProducts;
 namespace EcomMMS.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class ProductsController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -20,170 +21,83 @@ namespace EcomMMS.API.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductCommand command)
         {
             var result = await _mediator.Send(command);
-
             if (!result.IsSuccess)
             {
-                if (result.Errors.Any())
-                {
-                    return BadRequest(new
-                    {
-                        Success = false,
-                        Message = result.ErrorMessage,
-                        Errors = result.Errors
-                    });
-                }
-
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message = result.ErrorMessage
-                });
+                return BadRequest(result);
             }
 
-            return CreatedAtAction(nameof(GetProductById), new { id = result.Data!.Id }, new
-            {
-                Success = true,
-                Data = result.Data
-            });
+            return CreatedAtAction(nameof(GetProductById), new { id = result.Data!.Id }, result);
         }
 
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductCommand command)
         {
             command.Id = id;
             var result = await _mediator.Send(command);
-
+            
             if (!result.IsSuccess)
             {
-                if (result.Errors.Any())
+                if (result.ErrorMessage?.Contains("not found") == true)
                 {
-                    return BadRequest(new
-                    {
-                        Success = false,
-                        Message = result.ErrorMessage,
-                        Errors = result.Errors
-                    });
+                    return NotFound(result);
                 }
-
-                return NotFound(new
-                {
-                    Success = false,
-                    Message = result.ErrorMessage
-                });
+                return BadRequest(result);
             }
 
-            return Ok(new
-            {
-                Success = true,
-                Data = result.Data
-            });
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteProduct(Guid id)
         {
             var command = new DeleteProductCommand { Id = id };
             var result = await _mediator.Send(command);
-
+            
             if (!result.IsSuccess)
             {
-                if (result.Errors.Any())
+                if (result.ErrorMessage?.Contains("not found") == true)
                 {
-                    return BadRequest(new
-                    {
-                        Success = false,
-                        Message = result.ErrorMessage,
-                        Errors = result.Errors
-                    });
+                    return NotFound(result);
                 }
-
-                return NotFound(new
-                {
-                    Success = false,
-                    Message = result.ErrorMessage
-                });
+                return BadRequest(result);
             }
 
-            return Ok(new
-            {
-                Success = true,
-                Message = "Product deleted successfully"
-            });
+            return Ok(new { success = true, message = "Product deleted successfully" });
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetProductById(Guid id)
         {
             var query = new GetProductByIdQuery { Id = id };
             var result = await _mediator.Send(query);
-
+            
             if (!result.IsSuccess)
             {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message = result.ErrorMessage,
-                    Errors = result.Errors
-                });
+                return NotFound(result);
             }
 
-            if (result.Data == null)
-            {
-                return NotFound(new
-                {
-                    Success = false,
-                    Message = "Product not found"
-                });
-            }
-
-            return Ok(new
-            {
-                Success = true,
-                Data = result.Data
-            });
+            return Ok(result);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetFilteredProducts(
-            [FromQuery] string? searchTerm,
-            [FromQuery] int? minStockQuantity,
-            [FromQuery] int? maxStockQuantity,
-            [FromQuery] bool? isLive,
-            [FromQuery] Guid? categoryId,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetFilteredProducts([FromQuery] GetFilteredProductsQuery query)
         {
-            var query = new GetFilteredProductsQuery
-            {
-                SearchTerm = searchTerm,
-                MinStockQuantity = minStockQuantity,
-                MaxStockQuantity = maxStockQuantity,
-                IsLive = isLive,
-                CategoryId = categoryId,
-                Page = page,
-                PageSize = pageSize
-            };
-
             var result = await _mediator.Send(query);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message = result.ErrorMessage,
-                    Errors = result.Errors
-                });
-            }
-
-            return Ok(new
-            {
-                Success = true,
-                Data = result.Data
-            });
+            return Ok(result);
         }
     }
 } 

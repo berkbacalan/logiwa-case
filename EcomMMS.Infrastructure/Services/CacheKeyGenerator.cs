@@ -21,6 +21,21 @@ namespace EcomMMS.Infrastructure.Services
             return GenerateHashKey(keyBuilder.ToString());
         }
 
+        public string GenerateFilteredProductsKey(string? searchTerm, int? minStockQuantity, int? maxStockQuantity, bool? isLive, Guid? categoryId, int page, int pageSize)
+        {
+            var keyBuilder = new StringBuilder("products:filtered:");
+            
+            keyBuilder.Append($"search={searchTerm ?? "null"}:");
+            keyBuilder.Append($"minStock={minStockQuantity?.ToString() ?? "null"}:");
+            keyBuilder.Append($"maxStock={maxStockQuantity?.ToString() ?? "null"}:");
+            keyBuilder.Append($"isLive={isLive?.ToString() ?? "null"}:");
+            keyBuilder.Append($"categoryId={categoryId?.ToString() ?? "null"}:");
+            keyBuilder.Append($"page={page}:");
+            keyBuilder.Append($"pageSize={pageSize}");
+
+            return GenerateHashKey(keyBuilder.ToString());
+        }
+
         public string GenerateProductByIdKey(Guid id)
         {
             return $"products:id:{id}";

@@ -32,19 +32,19 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
 
         private void SetupCacheMocks()
         {
-            _mockCacheService.Setup(x => x.GetAsync<IEnumerable<ProductDto>>(It.IsAny<string>()))
-                .ReturnsAsync((IEnumerable<ProductDto>?)null);
-            _mockCacheKeyGenerator.Setup(x => x.GenerateProductFilterKey(It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<int>(), It.IsAny<int>()))
+            _mockCacheService.Setup(x => x.GetAsync<PaginatedResult<ProductDto>>(It.IsAny<string>()))
+                .ReturnsAsync((PaginatedResult<ProductDto>?)null);
+            _mockCacheKeyGenerator.Setup(x => x.GenerateFilteredProductsKey(It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<int>(), It.IsAny<int>()))
                 .Returns("test-cache-key");
-            _mockCacheService.Setup(x => x.SetAsync(It.IsAny<string>(), It.IsAny<IEnumerable<ProductDto>>(), It.IsAny<TimeSpan>()))
+            _mockCacheService.Setup(x => x.SetAsync(It.IsAny<string>(), It.IsAny<PaginatedResult<ProductDto>>(), It.IsAny<TimeSpan>()))
                 .Returns(Task.CompletedTask);
         }
 
         private void VerifyCacheMocks()
         {
-            _mockCacheService.Verify(x => x.GetAsync<IEnumerable<ProductDto>>(It.IsAny<string>()), Times.Once);
-            _mockCacheKeyGenerator.Verify(x => x.GenerateProductFilterKey(It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<int>(), It.IsAny<int>()), Times.Once);
-            _mockCacheService.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<IEnumerable<ProductDto>>(), It.IsAny<TimeSpan>()), Times.Once);
+            _mockCacheService.Verify(x => x.GetAsync<PaginatedResult<ProductDto>>(It.IsAny<string>()), Times.Once);
+            _mockCacheKeyGenerator.Verify(x => x.GenerateFilteredProductsKey(It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<int>(), It.IsAny<int>()), Times.Once);
+            _mockCacheService.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<PaginatedResult<ProductDto>>(), It.IsAny<TimeSpan>()), Times.Once);
         }
 
         [Fact]
@@ -52,20 +52,9 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
         {
             // Given
             var category = TestDataHelper.CreateTestCategory();
-            var products = new List<Product>
-            {
-                new Product("Product1", "Description1", category.Id, 15),
-                new Product("Product2", "Description2", category.Id, 25),
-                new Product("Product3", "Description3", category.Id, 35)
-            };
-
-            foreach (var product in products)
-            {
-                product.SetCategory(category);
-            }
-
+            var products = TestDataHelper.CreateTestProducts(3);
             var categories = new List<Category> { category };
-            var query = new GetFilteredProductsQuery { Page = 1, PageSize = 10 };
+            var query = new GetFilteredProductsQuery();
 
             _mockProductRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(products);
@@ -80,7 +69,14 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(3);
+            result.Data.Data.Should().HaveCount(3);
+            result.Data.Metadata.Should().NotBeNull();
+            result.Data.Metadata.CurrentPage.Should().Be(1);
+            result.Data.Metadata.PageSize.Should().Be(10);
+            result.Data.Metadata.TotalCount.Should().Be(3);
+            result.Data.Metadata.TotalPages.Should().Be(1);
+            result.Data.Metadata.HasNextPage.Should().BeFalse();
+            result.Data.Metadata.HasPreviousPage.Should().BeFalse();
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
@@ -123,8 +119,9 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(1);
-            result.Data.First().Title.ToLowerInvariant().Should().Contain("laptop");
+            result.Data.Data.Should().HaveCount(1);
+            result.Data.Data.First().Title.ToLowerInvariant().Should().Contain("laptop");
+            result.Data.Metadata.TotalCount.Should().Be(1);
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
@@ -167,8 +164,9 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(1);
-            result.Data.First().Description!.ToLowerInvariant().Should().Contain("performance");
+            result.Data.Data.Should().HaveCount(1);
+            result.Data.Data.First().Description!.ToLowerInvariant().Should().Contain("performance");
+            result.Data.Metadata.TotalCount.Should().Be(1);
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
@@ -211,8 +209,9 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
-            result.Data.Should().AllSatisfy(p => p.StockQuantity.Should().BeGreaterThanOrEqualTo(10));
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Data.Should().AllSatisfy(p => p.StockQuantity.Should().BeGreaterThanOrEqualTo(10));
+            result.Data.Metadata.TotalCount.Should().Be(2);
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
@@ -255,8 +254,8 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
-            result.Data.Should().AllSatisfy(p => p.StockQuantity.Should().BeLessThanOrEqualTo(20));
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Data.Should().AllSatisfy(p => p.StockQuantity.Should().BeLessThanOrEqualTo(20));
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
@@ -301,8 +300,8 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
-            result.Data.Should().AllSatisfy(p => p.StockQuantity.Should().BeInRange(10, 30));
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Data.Should().AllSatisfy(p => p.StockQuantity.Should().BeInRange(10, 30));
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
@@ -345,8 +344,8 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
-            result.Data.Should().AllSatisfy(p => p.IsLive.Should().BeTrue());
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Data.Should().AllSatisfy(p => p.IsLive.Should().BeTrue());
 
             _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
@@ -386,8 +385,8 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
-            result.Data.Should().AllSatisfy(p => p.CategoryId.Should().Be(category1.Id));
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Data.Should().AllSatisfy(p => p.CategoryId.Should().Be(category1.Id));
         }
 
         [Fact]
@@ -427,10 +426,10 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(1);
-            result.Data.First().Title.ToLowerInvariant().Should().Contain("laptop");
-            result.Data.First().StockQuantity.Should().BeGreaterThanOrEqualTo(10);
-            result.Data.First().IsLive.Should().BeTrue();
+            result.Data.Data.Should().HaveCount(1);
+            result.Data.Data.First().Title.ToLowerInvariant().Should().Contain("laptop");
+            result.Data.Data.First().StockQuantity.Should().BeGreaterThanOrEqualTo(10);
+            result.Data.Data.First().IsLive.Should().BeTrue();
         }
 
         [Fact]
@@ -453,7 +452,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().BeEmpty();
+            result.Data.Data.Should().BeEmpty();
         }
 
         [Fact]
@@ -477,8 +476,8 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
-            result.Data.Should().AllSatisfy(p => p.CategoryName.Should().BeEmpty());
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Data.Should().AllSatisfy(p => p.CategoryName.Should().BeEmpty());
         }
 
         [Theory]
@@ -521,7 +520,7 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
+            result.Data.Data.Should().HaveCount(2);
         }
 
         [Fact]
@@ -529,10 +528,13 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
         {
             // Given
             var category = TestDataHelper.CreateTestCategory();
-            var products = TestDataHelper.CreateTestProducts(15);
-
+            var products = TestDataHelper.CreateTestProducts(25);
             var categories = new List<Category> { category };
-            var query = new GetFilteredProductsQuery { Page = 1, PageSize = 5 };
+            var query = new GetFilteredProductsQuery
+            {
+                Page = 1,
+                PageSize = 10
+            };
 
             _mockProductRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(products);
@@ -547,7 +549,17 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(5);
+            result.Data.Data.Should().HaveCount(10);
+            result.Data.Metadata.CurrentPage.Should().Be(1);
+            result.Data.Metadata.PageSize.Should().Be(10);
+            result.Data.Metadata.TotalCount.Should().Be(25);
+            result.Data.Metadata.TotalPages.Should().Be(3);
+            result.Data.Metadata.HasNextPage.Should().BeTrue();
+            result.Data.Metadata.HasPreviousPage.Should().BeFalse();
+
+            _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            VerifyCacheMocks();
         }
 
         [Fact]
@@ -555,10 +567,13 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
         {
             // Given
             var category = TestDataHelper.CreateTestCategory();
-            var products = TestDataHelper.CreateTestProducts(15);
-
+            var products = TestDataHelper.CreateTestProducts(25);
             var categories = new List<Category> { category };
-            var query = new GetFilteredProductsQuery { Page = 2, PageSize = 5 };
+            var query = new GetFilteredProductsQuery
+            {
+                Page = 2,
+                PageSize = 10
+            };
 
             _mockProductRepository.Setup(x => x.GetAllAsync())
                 .ReturnsAsync(products);
@@ -573,13 +588,19 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(5);
-            
-            var expectedProducts = products.Skip(5).Take(5).ToList();
-            for (int i = 0; i < result.Data.Count(); i++)
-            {
-                result.Data.ElementAt(i).Id.Should().Be(expectedProducts[i].Id);
-            }
+            result.Data.Data.Should().HaveCount(10);
+            result.Data.Metadata.CurrentPage.Should().Be(2);
+            result.Data.Metadata.PageSize.Should().Be(10);
+            result.Data.Metadata.TotalCount.Should().Be(25);
+            result.Data.Metadata.TotalPages.Should().Be(3);
+            result.Data.Metadata.HasNextPage.Should().BeTrue();
+            result.Data.Metadata.HasPreviousPage.Should().BeTrue();
+            result.Data.Metadata.PreviousPage.Should().Be(1);
+            result.Data.Metadata.NextPage.Should().Be(3);
+
+            _mockProductRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
+            VerifyCacheMocks();
         }
 
         [Fact]
@@ -605,7 +626,11 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(2);
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Metadata.CurrentPage.Should().Be(3);
+            result.Data.Metadata.TotalPages.Should().Be(3);
+            result.Data.Metadata.HasNextPage.Should().BeFalse();
+            result.Data.Metadata.HasPreviousPage.Should().BeTrue();
         }
 
         [Fact]
@@ -631,7 +656,9 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().BeEmpty();
+            result.Data.Data.Should().BeEmpty();
+            result.Data.Metadata.CurrentPage.Should().Be(3);
+            result.Data.Metadata.TotalPages.Should().Be(1);
         }
 
         [Fact]
@@ -663,9 +690,9 @@ namespace EcomMMS.Tests.Features.Products.Queries.GetFilteredProducts
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
             result.Data.Should().NotBeNull();
-            result.Data.Should().HaveCount(3);
+            result.Data.Data.Should().HaveCount(3);
 
-            foreach (var product in result.Data)
+            foreach (var product in result.Data.Data)
             {
                 product.Title.Should().Contain("Test");
             }

@@ -1,12 +1,12 @@
 using MediatR;
-using EcomMMS.Domain.Interfaces;
-using EcomMMS.Application.DTOs;
 using EcomMMS.Application.Common;
+using EcomMMS.Application.DTOs;
+using EcomMMS.Domain.Interfaces;
 using System.Linq;
 
 namespace EcomMMS.Application.Features.Products.Queries.GetFilteredProducts
 {
-    public class GetFilteredProductsQueryHandler : IRequestHandler<GetFilteredProductsQuery, Result<IEnumerable<ProductDto>>>
+    public class GetFilteredProductsQueryHandler : IRequestHandler<GetFilteredProductsQuery, Result<PaginatedResult<ProductDto>>>
     {
         private readonly IProductRepository _productRepository;
         private readonly ICategoryRepository _categoryRepository;
@@ -28,11 +28,11 @@ namespace EcomMMS.Application.Features.Products.Queries.GetFilteredProducts
             _logger = logger;
         }
 
-        public async Task<Result<IEnumerable<ProductDto>>> Handle(GetFilteredProductsQuery request, CancellationToken cancellationToken)
+        public async Task<Result<PaginatedResult<ProductDto>>> Handle(GetFilteredProductsQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                var cacheKey = _cacheKeyGenerator.GenerateProductFilterKey(
+                var cacheKey = _cacheKeyGenerator.GenerateFilteredProductsKey(
                     request.SearchTerm,
                     request.MinStockQuantity,
                     request.MaxStockQuantity,
@@ -41,12 +41,12 @@ namespace EcomMMS.Application.Features.Products.Queries.GetFilteredProducts
                     request.Page,
                     request.PageSize);
 
-                var cachedResult = await _cacheService.GetAsync<IEnumerable<ProductDto>>(cacheKey);
+                var cachedResult = await _cacheService.GetAsync<PaginatedResult<ProductDto>>(cacheKey);
                 if (cachedResult != null)
                 {
                     _logger.LogInformation("Filtered products retrieved from cache - Count: {Count}, Page: {Page}, PageSize: {PageSize}", 
-                        cachedResult.Count(), request.Page, request.PageSize);
-                    return Result<IEnumerable<ProductDto>>.Success(cachedResult);
+                        cachedResult.Data.Count(), request.Page, request.PageSize);
+                    return Result<PaginatedResult<ProductDto>>.Success(cachedResult);
                 }
 
                 var products = await _productRepository.GetAllAsync();
@@ -102,15 +102,22 @@ namespace EcomMMS.Application.Features.Products.Queries.GetFilteredProducts
                     });
                 }
 
+                var totalCount = productDtos.Count;
                 var skip = (request.Page - 1) * request.PageSize;
                 var paginatedProducts = productDtos
                     .Skip(skip)
                     .Take(request.PageSize)
                     .ToList();
 
+                var result = new PaginatedResult<ProductDto>
+                {
+                    Data = paginatedProducts,
+                    Metadata = new PaginationMetadata(request.Page, request.PageSize, totalCount)
+                };
+
                 try
                 {
-                    await _cacheService.SetAsync(cacheKey, paginatedProducts, TimeSpan.FromMinutes(30));
+                    await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(30));
                     _logger.LogInformation("Filtered products cached successfully - Count: {Count}, Page: {Page}, PageSize: {PageSize}", 
                         paginatedProducts.Count, request.Page, request.PageSize);
                 }
@@ -120,15 +127,15 @@ namespace EcomMMS.Application.Features.Products.Queries.GetFilteredProducts
                 }
 
                 _logger.LogInformation("Filtered products retrieved successfully - TotalCount: {TotalCount}, Page: {Page}, PageSize: {PageSize}, SearchTerm: {SearchTerm}", 
-                    productDtos.Count, request.Page, request.PageSize, request.SearchTerm);
+                    totalCount, request.Page, request.PageSize, request.SearchTerm);
 
-                return Result<IEnumerable<ProductDto>>.Success(paginatedProducts);
+                return Result<PaginatedResult<ProductDto>>.Success(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to retrieve filtered products - SearchTerm: {SearchTerm}, Page: {Page}, PageSize: {PageSize}", 
                     request.SearchTerm, request.Page, request.PageSize);
-                return Result<IEnumerable<ProductDto>>.Failure($"An error occurred while retrieving products: {ex.Message}");
+                return Result<PaginatedResult<ProductDto>>.Failure($"An error occurred while retrieving products: {ex.Message}");
             }
         }
     }

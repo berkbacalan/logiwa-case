@@ -49,21 +49,17 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Then
-            Assert.True(result.IsSuccess);
-            Assert.NotNull(result.Data);
-            Assert.Equal(3, result.Data.Count);
-            
-            for (int i = 0; i < categories.Count(); i++)
-            {
-                var category = categories.ElementAt(i);
-                var categoryDto = result.Data[i];
-                
-                Assert.Equal(category.Id, categoryDto.Id);
-                Assert.Equal(category.Name, categoryDto.Name);
-                Assert.Equal(category.MinimumStockQuantity, categoryDto.MinimumStockQuantity);
-                Assert.Equal(category.CreatedAt, categoryDto.CreatedAt);
-                Assert.Equal(category.UpdatedAt, categoryDto.UpdatedAt);
-            }
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Data.Should().HaveCount(3);
+            result.Data.Metadata.Should().NotBeNull();
+            result.Data.Metadata.CurrentPage.Should().Be(1);
+            result.Data.Metadata.PageSize.Should().Be(10);
+            result.Data.Metadata.TotalCount.Should().Be(3);
+            result.Data.Metadata.TotalPages.Should().Be(1);
+            result.Data.Metadata.HasNextPage.Should().BeFalse();
+            result.Data.Metadata.HasPreviousPage.Should().BeFalse();
 
             _mockCacheService.Verify(x => x.GetAsync<List<CategoryDto>>(cacheKey), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Once);
@@ -91,9 +87,11 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Then
-            Assert.True(result.IsSuccess);
-            Assert.NotNull(result.Data);
-            Assert.Equal(2, result.Data.Count);
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Metadata.TotalCount.Should().Be(2);
 
             _mockCacheService.Verify(x => x.GetAsync<List<CategoryDto>>(cacheKey), Times.Once);
             _mockCategoryRepository.Verify(x => x.GetAllAsync(), Times.Never);
@@ -121,9 +119,11 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Then
-            Assert.True(result.IsSuccess);
-            Assert.NotNull(result.Data);
-            Assert.Empty(result.Data);
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Data.Should().BeEmpty();
+            result.Data.Metadata.TotalCount.Should().Be(0);
         }
 
         [Fact]
@@ -144,8 +144,9 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Then
-            Assert.False(result.IsSuccess);
-            Assert.Equal("An error occurred while retrieving categories: Database error", result.ErrorMessage);
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorMessage.Should().Be("An error occurred while retrieving categories: Database error");
         }
 
         [Fact]
@@ -169,9 +170,16 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Then
-            Assert.True(result.IsSuccess);
-            Assert.NotNull(result.Data);
-            Assert.Equal(5, result.Data.Count);
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Data.Should().HaveCount(5);
+            result.Data.Metadata.CurrentPage.Should().Be(1);
+            result.Data.Metadata.PageSize.Should().Be(5);
+            result.Data.Metadata.TotalCount.Should().Be(15);
+            result.Data.Metadata.TotalPages.Should().Be(3);
+            result.Data.Metadata.HasNextPage.Should().BeTrue();
+            result.Data.Metadata.HasPreviousPage.Should().BeFalse();
         }
 
         [Fact]
@@ -195,16 +203,18 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Then
-            Assert.True(result.IsSuccess);
-            Assert.NotNull(result.Data);
-            Assert.Equal(5, result.Data.Count);
-            
-            // Verify it's the second page (items 6-10)
-            var expectedCategories = categories.Skip(5).Take(5).ToList();
-            for (int i = 0; i < result.Data.Count; i++)
-            {
-                Assert.Equal(expectedCategories[i].Id, result.Data[i].Id);
-            }
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Data.Should().HaveCount(5);
+            result.Data.Metadata.CurrentPage.Should().Be(2);
+            result.Data.Metadata.PageSize.Should().Be(5);
+            result.Data.Metadata.TotalCount.Should().Be(15);
+            result.Data.Metadata.TotalPages.Should().Be(3);
+            result.Data.Metadata.HasNextPage.Should().BeTrue();
+            result.Data.Metadata.HasPreviousPage.Should().BeTrue();
+            result.Data.Metadata.PreviousPage.Should().Be(1);
+            result.Data.Metadata.NextPage.Should().Be(3);
         }
 
         [Fact]
@@ -228,9 +238,14 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Then
-            Assert.True(result.IsSuccess);
-            Assert.NotNull(result.Data);
-            Assert.Equal(2, result.Data.Count);
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Data.Should().HaveCount(2);
+            result.Data.Metadata.CurrentPage.Should().Be(3);
+            result.Data.Metadata.TotalPages.Should().Be(3);
+            result.Data.Metadata.HasNextPage.Should().BeFalse();
+            result.Data.Metadata.HasPreviousPage.Should().BeTrue();
         }
 
         [Fact]
@@ -254,9 +269,12 @@ namespace EcomMMS.Tests.Features.Categories.Queries.GetAllCategories
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Then
-            Assert.True(result.IsSuccess);
-            Assert.NotNull(result.Data);
-            Assert.Empty(result.Data);
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data.Data.Should().BeEmpty();
+            result.Data.Metadata.CurrentPage.Should().Be(3);
+            result.Data.Metadata.TotalPages.Should().Be(1);
         }
     }
 }

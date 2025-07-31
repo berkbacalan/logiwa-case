@@ -5,7 +5,7 @@ using EcomMMS.Domain.Interfaces;
 
 namespace EcomMMS.Application.Features.Categories.Queries.GetAllCategories
 {
-    public class GetAllCategoriesQueryHandler : IRequestHandler<GetAllCategoriesQuery, Result<List<CategoryDto>>>
+    public class GetAllCategoriesQueryHandler : IRequestHandler<GetAllCategoriesQuery, Result<PaginatedResult<CategoryDto>>>
     {
         private readonly ICategoryRepository _categoryRepository;
         private readonly ICacheService _cacheService;
@@ -24,7 +24,7 @@ namespace EcomMMS.Application.Features.Categories.Queries.GetAllCategories
             _logger = logger;
         }
 
-        public async Task<Result<List<CategoryDto>>> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
+        public async Task<Result<PaginatedResult<CategoryDto>>> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
         {
             try
             {
@@ -56,26 +56,29 @@ namespace EcomMMS.Application.Features.Categories.Queries.GetAllCategories
                     _logger.LogInformation("Categories cached successfully. Count: {Count}", allCategories.Count);
                 }
 
-                var paginatedCategories = ApplyPagination(allCategories, request.Page, request.PageSize);
+                var totalCount = allCategories.Count;
+                var skip = (request.Page - 1) * request.PageSize;
+                var paginatedCategories = allCategories
+                    .Skip(skip)
+                    .Take(request.PageSize)
+                    .ToList();
+
+                var result = new PaginatedResult<CategoryDto>
+                {
+                    Data = paginatedCategories,
+                    Metadata = new PaginationMetadata(request.Page, request.PageSize, totalCount)
+                };
+
                 _logger.LogInformation("Categories retrieved successfully. Total: {Total}, Page: {Page}, PageSize: {PageSize}, Returned: {Returned}", 
-                    allCategories.Count, request.Page, request.PageSize, paginatedCategories.Count);
+                    totalCount, request.Page, request.PageSize, paginatedCategories.Count);
                 
-                return Result<List<CategoryDto>>.Success(paginatedCategories);
+                return Result<PaginatedResult<CategoryDto>>.Success(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while retrieving categories");
-                return Result<List<CategoryDto>>.Failure($"An error occurred while retrieving categories: {ex.Message}");
+                return Result<PaginatedResult<CategoryDto>>.Failure($"An error occurred while retrieving categories: {ex.Message}");
             }
-        }
-
-        private static List<CategoryDto> ApplyPagination(List<CategoryDto> categories, int page, int pageSize)
-        {
-            var skip = (page - 1) * pageSize;
-            return categories
-                .Skip(skip)
-                .Take(pageSize)
-                .ToList();
         }
     }
 } 

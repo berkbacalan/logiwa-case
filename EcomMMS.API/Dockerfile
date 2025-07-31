@@ -20,5 +20,9 @@ RUN dotnet publish "EcomMMS.API.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+COPY env.example /app/env.example
+RUN if [ ! -f /app/.env ]; then cp /app/env.example /app/.env; fi
+
 ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "EcomMMS.API.dll"] 
