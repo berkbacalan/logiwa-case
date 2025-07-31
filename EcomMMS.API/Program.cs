@@ -2,8 +2,17 @@ using EcomMMS.Application;
 using EcomMMS.Infrastructure;
 using EcomMMS.Persistence;
 using EcomMMS.API.Middleware;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .WriteTo.Console()
+    .WriteTo.Seq(builder.Configuration["Seq:ServerUrl"] ?? "http://seq:5341")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -35,6 +44,7 @@ builder.Services.AddPersistence(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseRequestResponseLogging();
 app.UseCachePerformanceMonitoring();
 
 using (var scope = app.Services.CreateScope())
@@ -56,5 +66,17 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run();
+try
+{
+    Log.Information("Starting EcomMMS API");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 

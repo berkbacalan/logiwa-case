@@ -10,10 +10,25 @@ services:
     depends_on:
       - postgres
       - redis
+      - seq
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=ecommms;Username=postgres;Password=postgres
       - Redis__ConnectionString=redis:6379
+      - Seq__ServerUrl=http://seq:5341
+    networks:
+      - ecommms-network
+
+  seq:
+    image: datalust/seq:latest
+    ports:
+      - "5341:80"
+      - "5342:5341"
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
+    volumes:
+      - seq_data:/data
     networks:
       - ecommms-network
 
@@ -42,6 +57,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  seq_data:
 
 networks:
   ecommms-network:
