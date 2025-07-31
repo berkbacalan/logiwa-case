@@ -10,14 +10,16 @@ namespace EcomMMS.Application.Features.Products.Commands.UpdateProduct
                 .NotEmpty().WithMessage("Product ID is required.");
 
             RuleFor(x => x.Title)
-                .NotEmpty().WithMessage("Title is required.")
-                .MaximumLength(200).WithMessage("Title cannot exceed 200 characters.");
+                .MaximumLength(200).When(x => !string.IsNullOrWhiteSpace(x.Title))
+                .WithMessage("Title cannot exceed 200 characters.");
 
             RuleFor(x => x.CategoryId)
-                .NotEmpty().WithMessage("Category ID is required.");
+                .NotEmpty().When(x => x.CategoryId.HasValue)
+                .WithMessage("Category ID cannot be empty when provided.");
 
             RuleFor(x => x.StockQuantity)
-                .GreaterThanOrEqualTo(0).WithMessage("Stock quantity cannot be negative.");
+                .GreaterThanOrEqualTo(0).When(x => x.StockQuantity.HasValue)
+                .WithMessage("Stock quantity cannot be negative.");
         }
     }
 } 

@@ -9,9 +9,11 @@ services:
       - "5000:8080"
     depends_on:
       - postgres
+      - redis
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=ecommms;Username=postgres;Password=postgres
+      - Redis__ConnectionString=redis:6379
     networks:
       - ecommms-network
 
@@ -28,8 +30,18 @@ services:
     networks:
       - ecommms-network
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ecommms-network
+
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   ecommms-network:

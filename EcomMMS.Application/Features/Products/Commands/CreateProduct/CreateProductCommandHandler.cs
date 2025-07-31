@@ -12,15 +12,18 @@ namespace EcomMMS.Application.Features.Products.Commands.CreateProduct
         private readonly IProductRepository _productRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IValidator<CreateProductCommand> _validator;
+        private readonly ICacheService _cacheService;
 
         public CreateProductCommandHandler(
             IProductRepository productRepository,
             ICategoryRepository categoryRepository,
-            IValidator<CreateProductCommand> validator)
+            IValidator<CreateProductCommand> validator,
+            ICacheService cacheService)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _validator = validator;
+            _cacheService = cacheService;
         }
 
         public async Task<Result<ProductDto>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
@@ -61,7 +64,20 @@ namespace EcomMMS.Application.Features.Products.Commands.CreateProduct
                 UpdatedAt = createdProduct.UpdatedAt
             };
 
+            await InvalidateProductCache();
+
             return Result<ProductDto>.Success(productDto);
+        }
+
+        private async Task InvalidateProductCache()
+        {
+            try
+            {
+                await _cacheService.RemoveByPatternAsync("products:*");
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 } 

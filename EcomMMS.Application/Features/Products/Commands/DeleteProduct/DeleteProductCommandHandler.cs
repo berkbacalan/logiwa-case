@@ -9,13 +9,16 @@ namespace EcomMMS.Application.Features.Products.Commands.DeleteProduct
     {
         private readonly IProductRepository _productRepository;
         private readonly IValidator<DeleteProductCommand> _validator;
+        private readonly ICacheService _cacheService;
 
         public DeleteProductCommandHandler(
             IProductRepository productRepository,
-            IValidator<DeleteProductCommand> validator)
+            IValidator<DeleteProductCommand> validator,
+            ICacheService cacheService)
         {
             _productRepository = productRepository;
             _validator = validator;
+            _cacheService = cacheService;
         }
 
         public async Task<Result<bool>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
@@ -35,7 +38,20 @@ namespace EcomMMS.Application.Features.Products.Commands.DeleteProduct
 
             await _productRepository.DeleteAsync(request.Id);
 
+            await InvalidateProductCache();
+
             return Result<bool>.Success(true);
+        }
+
+        private async Task InvalidateProductCache()
+        {
+            try
+            {
+                await _cacheService.RemoveByPatternAsync("products:*");
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 } 

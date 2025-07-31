@@ -1,6 +1,7 @@
 using EcomMMS.Application;
 using EcomMMS.Infrastructure;
 using EcomMMS.Persistence;
+using EcomMMS.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,11 +17,25 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+var redisConnectionString = builder.Configuration["Redis:ConnectionString"];
+if (string.IsNullOrEmpty(redisConnectionString))
+{
+    throw new InvalidOperationException("Redis connection string is not configured. Please add 'Redis:ConnectionString' to your configuration.");
+}
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnectionString;
+    options.InstanceName = "EcomMMS_";
+});
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
 
 var app = builder.Build();
+
+app.UseCachePerformanceMonitoring();
 
 using (var scope = app.Services.CreateScope())
 {

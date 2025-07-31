@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\EcomMMS.Application\EcomMMS.Application.csproj" />
     <ProjectReference Include="..\EcomMMS.Domain\EcomMMS.Domain.csproj" />
     <ProjectReference Include="..\EcomMMS.Persistence\EcomMMS.Persistence.csproj" />
   </ItemGroup>
