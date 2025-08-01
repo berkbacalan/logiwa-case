@@ -9,7 +9,23 @@ namespace EcomMMS.Persistence
         {
             try
             {
-                if (!context.Categories.Any())
+                if (!context.Database.CanConnect())
+                {
+                    logger?.LogWarning("Cannot connect to database, skipping seed");
+                    return;
+                }
+
+                var hasCategories = false;
+                try
+                {
+                    hasCategories = context.Categories.Any();
+                }
+                catch
+                {
+                    hasCategories = false;
+                }
+
+                if (!hasCategories)
                 {
                     logger?.LogInformation("Starting to seed categories");
                     

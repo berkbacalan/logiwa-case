@@ -8,9 +8,12 @@ services:
     ports:
       - "5000:8080"
     depends_on:
-      - postgres
-      - redis
-      - seq
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      seq:
+        condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=ecommms;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
@@ -37,13 +40,19 @@ services:
     environment:
       POSTGRES_DB: ecommms
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ecommms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ecommms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:7-alpine

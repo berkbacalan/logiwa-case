@@ -120,6 +120,9 @@ using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        context.Database.EnsureCreated();
+
         SeedData.SeedCategories(context, logger);
     }
     catch (Exception ex)
